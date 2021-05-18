@@ -12,10 +12,39 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    JSON,
 )
 
 from quant.util.database import Base
 from datetime import datetime
+from quant.util.database import session_scope
+from quant.util import logger
+
+_logger = logger.Logger(__name__).get_log()
+
+
+class Task_Details(Base):
+    """任务执行细节表"""
+
+    __tablename__ = "odl_task_details"
+    id = Column(Integer, primary_key=True)
+    task = Column(Integer, nullable=False)  # 任务ID
+    code = Column(String(20), nullable=False)  # 证券代码
+    content = Column(JSON)  # 任务内容
+    finished = Column(Boolean, default=False, nullable=False)  # 是否完成
+    remark = Column(String(50))  # 备注信息
+    create_on = Column(DateTime, default=datetime.now())
+
+    @staticmethod
+    def del_with_task(task):
+        """
+        按任务ID过滤，删除历史任务列表
+        """
+        with session_scope() as sm:
+            query = sm.query(Task_Details).filter(Task_Details.task == task)
+            query.delete()
+            sm.commit()
+            _logger.info("任务：{}-历史任务已删除".format(task))
 
 
 class BS_Stock_Basic(Base):
@@ -40,18 +69,37 @@ class BS_Profit_Data(Base):
     """
 
     __tablename__ = "odl_bs_profit_data"
-    id = Column("id", BigInteger, primary_key=True)
-    code = Column("code", String(10))  # 证券代码
-    pubDate = Column("pubDate", String(10))  # 公司发布财报的日期
-    statDate = Column("statDate", String(10))  # 财报统计的季度的最后一天, 比如2017-03-31, 2017-06-30
-    roeAvg = Column("roeAvg", String(23))  # 净资产收益率(平均)(%)
-    npMargin = Column("npMargin", String(23))  # 销售净利率(%)
-    gpMargin = Column("gpMargin", String(23))  # 销售毛利率(%)
-    netProfit = Column("netProfit", String(23))  # 净利润(元)
-    epsTTM = Column("epsTTM", String(23))  # 每股收益
-    MBRevenue = Column("MBRevenue", String(23))  # 主营营业收入(元)
-    totalShare = Column("totalShare", String(23))  # 总股本
-    liqaShare = Column("liqaShare", String(23))  # 流通股本
+    id = Column("id", Integer, primary_key=True)
+    # 证券代码
+    code = Column("code", String(10), nullable=False)
+    # 统计年份
+    year = Column("year", Integer, nullable=False)
+    # 统计季度
+    quarter = Column("quarter", Integer, nullable=False)
+    # 公司发布财报的日期
+    pubDate = Column("pubDate", Date, nullable=False)
+    # 财报统计的季度的最后一天, 比如2017-03-31, 2017-06-30
+    statDate = Column("statDate", Date, nullable=False)
+    # 净资产收益率(平均)(%)
+    roeAvg = Column("roeAvg", Numeric(23, 6))
+    # 销售净利率(%)
+    npMargin = Column("npMargin", Numeric(23, 6))
+    # 销售毛利率(%)
+    gpMargin = Column("gpMargin", Numeric(23, 6))
+    # 净利润(元)
+    netProfit = Column("netProfit", Numeric(23, 6))
+    # 每股收益
+    epsTTM = Column("epsTTM", Numeric(23, 6))
+    # 主营营业收入(元)
+    MBRevenue = Column("MBRevenue", Numeric(23, 6))
+    # 总股本
+    totalShare = Column("totalShare", Numeric(23, 2))
+    # 流通股本
+    liqaShare = Column("liqaShare", Numeric(23, 2))
+
+    __table_args__ = (
+        UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),
+    )
 
 
 class BS_Operation_Data(Base):

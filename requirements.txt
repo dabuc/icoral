@@ -1,6 +1,7 @@
 appdirs==1.4.4
 baostock==0.8.8
 black==21.5b1
+certifi==2020.12.5
 click==8.0.0
 Flask==2.0.0
 greenlet==1.1.0
@@ -19,4 +20,5 @@ regex==2021.4.4
 six==1.16.0
 SQLAlchemy==1.4.15
 toml==0.10.2
+tqdm==4.60.0
 Werkzeug==2.0.0

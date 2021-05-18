@@ -9,6 +9,7 @@ def cli():
     """操作数据层"""
     pass
 
+
 @cli.command()
 def create_dw():
     """创建数据仓库"""
@@ -21,16 +22,23 @@ def create_dw():
 
 @cli.command()
 def query_stock_basic():
-    """更新证券基本资料
-    """    
+    """更新证券基本资料"""
     click.confirm("正在更新证券基本资料，是否继续？", abort=True)
     from quant.odl import models
+
     models.BS_Stock_Basic.clear_table()
     click.echo("BS_Stock_Basic已经清空")
     stock_basic.get_stock_basic()
     click.echo("更新证券基本资料完成")
 
 
+@cli.command()
+def query_profit_data():
+    """更新季频盈利能力"""
+    click.confirm("正在更新季频盈利能力，是否继续？", abort=True)
+    from quant.odl.baostock.profit_data import get_profit_data
+    get_profit_data()
+    click.echo("季频盈利能力更新完成")
 
 if __name__ == "__main__":
     cli()
