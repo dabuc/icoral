@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""季频盈利能力"""
+"""季频偿债能力"""
 
 import pandas as pd
 from quant.odl.baostock.util import crawl_finance_data
-from quant.odl.models import BS_Profit_Data
+from quant.odl.models import BS_Balance_Data
 from quant.util.database import engine
 
 import baostock as bs
@@ -16,20 +16,21 @@ def load_to_DB(data_df, param, pbar):
     """
     加载数据到数据库
     """
+
     data_df["pubDate"] = pd.to_datetime(data_df["pubDate"], format="%Y-%m-%d")
     data_df["statDate"] = pd.to_datetime(data_df["statDate"], format="%Y-%m-%d")
-    data_df["roeAvg"] = pd.to_numeric(data_df["roeAvg"], errors="coerce")
-    data_df["npMargin"] = pd.to_numeric(data_df["npMargin"], errors="coerce")
-    data_df["gpMargin"] = pd.to_numeric(data_df["gpMargin"], errors="coerce")
-    data_df["netProfit"] = pd.to_numeric(data_df["netProfit"], errors="coerce")
-    data_df["epsTTM"] = pd.to_numeric(data_df["epsTTM"], errors="coerce")
-    data_df["MBRevenue"] = pd.to_numeric(data_df["MBRevenue"], errors="coerce")
-    data_df["totalShare"] = pd.to_numeric(data_df["totalShare"], errors="coerce")
-    data_df["liqaShare"] = pd.to_numeric(data_df["liqaShare"], errors="coerce")
+    data_df["currentRatio"] = pd.to_numeric(data_df["currentRatio"], errors="coerce")
+    data_df["quickRatio"] = pd.to_numeric(data_df["quickRatio"], errors="coerce")
+    data_df["cashRatio"] = pd.to_numeric(data_df["cashRatio"], errors="coerce")
+    data_df["YOYLiability"] = pd.to_numeric(data_df["YOYLiability"], errors="coerce")
+    data_df["liabilityToAsset"] = pd.to_numeric(
+        data_df["liabilityToAsset"], errors="coerce"
+    )
+    data_df["assetToEquity"] = pd.to_numeric(data_df["assetToEquity"], errors="coerce")
 
     try:
         data_df.to_sql(
-            BS_Profit_Data.__tablename__,
+            BS_Balance_Data.__tablename__,
             engine,
             if_exists="append",
             index=False,
@@ -44,10 +45,11 @@ def load_to_DB(data_df, param, pbar):
         pbar.update(1)
 
 
-def get_profit_data():
+def get_balance_data():
+
     #### 登陆系统 ####
     bs.login()  # noqa
 
-    crawl_finance_data(bs.query_profit_data, load_to_DB)
+    crawl_finance_data(bs.query_balance_data, load_to_DB)
     #### 登出系统 ####
     bs.logout()

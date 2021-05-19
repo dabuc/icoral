@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""季频盈利能力"""
+"""季频营运能力"""
 
 import pandas as pd
 from quant.odl.baostock.util import crawl_finance_data
-from quant.odl.models import BS_Profit_Data
+from quant.odl.models import BS_Operation_Data
 from quant.util.database import engine
 
 import baostock as bs
@@ -11,25 +11,23 @@ from quant.util import logger
 
 _logger = logger.Logger(__name__).get_log()
 
-
-def load_to_DB(data_df, param, pbar):
+def load_to_DB(data_df,param,pbar):
     """
     加载数据到数据库
     """
+
     data_df["pubDate"] = pd.to_datetime(data_df["pubDate"], format="%Y-%m-%d")
     data_df["statDate"] = pd.to_datetime(data_df["statDate"], format="%Y-%m-%d")
-    data_df["roeAvg"] = pd.to_numeric(data_df["roeAvg"], errors="coerce")
-    data_df["npMargin"] = pd.to_numeric(data_df["npMargin"], errors="coerce")
-    data_df["gpMargin"] = pd.to_numeric(data_df["gpMargin"], errors="coerce")
-    data_df["netProfit"] = pd.to_numeric(data_df["netProfit"], errors="coerce")
-    data_df["epsTTM"] = pd.to_numeric(data_df["epsTTM"], errors="coerce")
-    data_df["MBRevenue"] = pd.to_numeric(data_df["MBRevenue"], errors="coerce")
-    data_df["totalShare"] = pd.to_numeric(data_df["totalShare"], errors="coerce")
-    data_df["liqaShare"] = pd.to_numeric(data_df["liqaShare"], errors="coerce")
+    data_df["NRTurnRatio"] = pd.to_numeric(data_df["NRTurnRatio"], errors="coerce")
+    data_df["NRTurnDays"] = pd.to_numeric(data_df["NRTurnDays"], errors="coerce")
+    data_df["INVTurnRatio"] = pd.to_numeric(data_df["INVTurnRatio"], errors="coerce")
+    data_df["INVTurnDays"] = pd.to_numeric(data_df["INVTurnDays"], errors="coerce")
+    data_df["CATurnRatio"] = pd.to_numeric(data_df["CATurnRatio"], errors="coerce")
+    data_df["AssetTurnRatio"] = pd.to_numeric(data_df["AssetTurnRatio"], errors="coerce")
 
     try:
         data_df.to_sql(
-            BS_Profit_Data.__tablename__,
+            BS_Operation_Data.__tablename__,
             engine,
             if_exists="append",
             index=False,
@@ -43,11 +41,11 @@ def load_to_DB(data_df, param, pbar):
     finally:
         pbar.update(1)
 
+def get_operation_data():
 
-def get_profit_data():
     #### 登陆系统 ####
     bs.login()  # noqa
 
-    crawl_finance_data(bs.query_profit_data, load_to_DB)
+    crawl_finance_data(bs.query_operation_data, load_to_DB)
     #### 登出系统 ####
     bs.logout()

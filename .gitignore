@@ -304,3 +304,4 @@ $RECYCLE.BIN/
 test.py
 .flaskenv
 tmp.sql
+*.csv
