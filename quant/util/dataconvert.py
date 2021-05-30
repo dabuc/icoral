@@ -57,3 +57,24 @@ def convert_to_tscode(bs_code: str):
     b = bs_code.split(".")
     bs_code = "{}.{}".format(b[1], b[0].upper())
     return bs_code
+
+
+def get_data_part(x: datetime, p):
+    """
+    获取时间成分
+    """
+    if p == "Y":
+        return x.year
+    elif p == "M":
+        return x.month
+    elif p == "W":
+        return x.strftime("%W")
+    elif p == "Q":
+        if x.month <= 3:
+            return 1
+        elif 3 < x.month <= 6:
+            return 2
+        elif 6 < x.month <= 9:
+            return 3
+        else:
+            return 4

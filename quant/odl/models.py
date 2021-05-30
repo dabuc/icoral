@@ -21,6 +21,7 @@ from datetime import datetime
 from quant.util.database import session_scope
 from quant.util import logger
 from quant.util.helper import is_dev_env
+from sqlalchemy.ext.declarative import declared_attr
 
 _logger = logger.Logger(__name__).get_log()
 
@@ -49,6 +50,20 @@ class Task_Details(Base):
             _logger.info("任务：{}-历史任务已删除".format(task))
 
 
+class BS_Trade_Dates(Base):
+    """
+    交易日期
+    """
+
+    __tablename__ = "odl_bs_trade_dates"
+    calendar_date = Column("calendar_date", Date, primary_key=True)  # 日期
+    year = Column("year", Integer, nullable=False)  # 年
+    month = Column("month", Integer, nullable=False)  # 月
+    week = Column("week", String(2), nullable=False)  # 周
+    quarter = Column("quarter", Integer, nullable=False)  # 季度
+    is_trading_day = Column("is_trading_day", Boolean)  # 是否交易日(0:非交易日;1:交易日)
+
+
 class BS_Stock_Basic(Base):
     """
     BS-证券基本资料
@@ -65,16 +80,20 @@ class BS_Stock_Basic(Base):
     updated_on = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     @staticmethod
-    def get_stock_codes():
+    def get_stock_codes(include_index: bool = False):
         """获取所有上市股票代码列表；测试环境只获取前10个
+
+        Args:
+            include_index (bool, optional): 是否包含指数.默认不包含
 
         Returns:
             [List]: 股票代码列表
         """
         with session_scope() as sm:
-            query = sm.query(BS_Stock_Basic.code).filter(
-                BS_Stock_Basic.type == 1, BS_Stock_Basic.status == 1
-            )
+            query = sm.query(BS_Stock_Basic.code).filter(BS_Stock_Basic.status == 1)
+
+            if not include_index:
+                query = query.filter(BS_Stock_Basic.type == 1)
 
             if is_dev_env():
                 codes = query.limit(10)
@@ -120,9 +139,7 @@ class BS_Profit_Data(Base):
     # 流通股本
     liqaShare = Column("liqaShare", Numeric(23, 2))
 
-    __table_args__ = (
-        UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),
-    )
+    __table_args__ = (UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),)
 
 
 class BS_Operation_Data(Base):
@@ -154,9 +171,7 @@ class BS_Operation_Data(Base):
     CATurnRatio = Column("CATurnRatio", Numeric(15, 6))
     # 总资产周转率——营业总收入/[(期初资产总额+期末资产总额)/2]
     AssetTurnRatio = Column("AssetTurnRatio", Numeric(15, 6))
-    __table_args__ = (
-        UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),
-    )
+    __table_args__ = (UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),)
 
 
 class BS_Growth_Data(Base):
@@ -186,9 +201,7 @@ class BS_Growth_Data(Base):
     YOYEPSBasic = Column("YOYEPSBasic", Numeric(15, 6))
     # 归属母公司股东净利润同比增长率	(本期归属母公司股东净利润-上年同期归属母公司股东净利润)/上年同期归属母公司股东净利润的绝对值*100%
     YOYPNI = Column("YOYPNI", Numeric(15, 6))
-    __table_args__ = (
-        UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),
-    )
+    __table_args__ = (UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),)
 
 
 class BS_Balance_Data(Base):
@@ -220,9 +233,7 @@ class BS_Balance_Data(Base):
     liabilityToAsset = Column("liabilityToAsset", Numeric(15, 6))
     # 权益乘数	资产总额/股东权益总额=1/(1-资产负债率)
     assetToEquity = Column("assetToEquity", Numeric(15, 6))
-    __table_args__ = (
-        UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),
-    )
+    __table_args__ = (UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),)
 
 
 class BS_Cash_Flow_Data(Base):
@@ -256,9 +267,7 @@ class BS_Cash_Flow_Data(Base):
     CFOToNP = Column("CFOToNP", Numeric(15, 6))
     # 经营性现金净流量除以营业总收入
     CFOToGr = Column("CFOToGr", Numeric(15, 6))
-    __table_args__ = (
-        UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),
-    )
+    __table_args__ = (UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),)
 
 
 class BS_Dupont_Data(Base):
@@ -294,9 +303,7 @@ class BS_Dupont_Data(Base):
     dupontIntburden = Column("dupontIntburden", Numeric(15, 6))
     # 息税前利润/营业总收入，反映企业经营利润率，是企业经营获得的可供全体投资人（股东和债权人）分配的盈利占企业全部营收收入的百分比
     dupontEbittogr = Column("dupontEbittogr", Numeric(15, 6))
-    __table_args__ = (
-        UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),
-    )
+    __table_args__ = (UniqueConstraint("code", "year", "quarter", name="UDX_CODE_YEAR_QUARTER"),)
 
 
 class BS_Performance_Express_Report(Base):
@@ -315,9 +322,7 @@ class BS_Performance_Express_Report(Base):
     # 业绩快报披露日(最新)
     performanceExpUpdateDate = Column("performanceExpUpdateDate", Date, nullable=False)
     # 业绩快报总资产
-    performanceExpressTotalAsset = Column(
-        "performanceExpressTotalAsset", Numeric(23, 6)
-    )
+    performanceExpressTotalAsset = Column("performanceExpressTotalAsset", Numeric(23, 6))
     # 业绩快报净资产
     performanceExpressNetAsset = Column("performanceExpressNetAsset", Numeric(23, 6))
     # 业绩每股收益增长率
@@ -325,9 +330,7 @@ class BS_Performance_Express_Report(Base):
     # 业绩快报净资产收益率ROE-加权
     performanceExpressROEWa = Column("performanceExpressROEWa", Numeric(15, 6))
     # 业绩快报每股收益EPS-摊薄
-    performanceExpressEPSDiluted = Column(
-        "performanceExpressEPSDiluted", Numeric(15, 6)
-    )
+    performanceExpressEPSDiluted = Column("performanceExpressEPSDiluted", Numeric(15, 6))
     # 业绩快报营业总收入同比
     performanceExpressGRYOY = Column("performanceExpressGRYOY", Numeric(15, 6))
     # 业绩快报营业利润同比
@@ -355,3 +358,50 @@ class BS_forecast_report(Base):
     profitForcastChgPctUp = Column("profitForcastChgPctUp", Numeric(15, 6))
     # 预告归属于母公司的净利润增长下限(%)
     profitForcastChgPctDwn = Column("profitForcastChgPctDwn", Numeric(15, 6))
+
+
+class BS_Daily_Base:
+    """
+    BS日线历史行情数据基类
+    """
+
+    id = Column("id", Integer, primary_key=True)
+    date = Column("date", Date, nullable=False)  # 交易所行情日期
+    code = Column("code", String(10), nullable=False)  # BS证券代码 格式：sh.600000。sh：上海，sz：深圳
+    open = Column("open", Numeric(18, 4), nullable=False)  # 今开盘价格 精度：小数点后4位；单位：人民币元
+    high = Column("high", Numeric(18, 4), nullable=False)  # 最高价 精度：小数点后4位；单位：人民币元
+    low = Column("low", Numeric(18, 4), nullable=False)  # 最低价 精度：小数点后4位；单位：人民币元
+    close = Column("close", Numeric(18, 4), nullable=False)  # 今收盘价 精度：小数点后4位；单位：人民币元
+    preclose = Column("preclose", Numeric(18, 4))  # 昨日收盘价 精度：小数点后4位；单位：人民币元
+    volume = Column("volume", BigInteger)  # 成交数量 单位：股
+    amount = Column("amount", Numeric(23, 4))  # 成交金额	精度：小数点后4位；单位：人民币元
+    adjustflag = Column("adjustflag", Enum("1", "2", "3"))  # 复权状态(1：后复权， 2：前复权，3：不复权）
+    turn = Column("turn", Numeric(18, 6))  # 换手率 精度：小数点后6位；单位：%
+    tradestatus = Column("tradestatus", Boolean)  # 交易状态	1：正常交易 0：停牌
+    pctChg = Column("pctChg", Numeric(18, 6))  # 涨跌幅（百分比）	精度：小数点后6位
+    peTTM = Column("peTTM", Numeric(18, 6))  # 滚动市盈率	精度：小数点后6位
+    psTTM = Column("psTTM", Numeric(18, 6))  # 滚动市销率	精度：小数点后6位
+    pcfNcfTTM = Column("pcfNcfTTM", Numeric(18, 6))  # 滚动市现率	精度：小数点后6位
+    pbMRQ = Column("pbMRQ", Numeric(18, 6))  # 市净率	精度：小数点后6位
+    isST = Column("isST", Boolean)  # 是否ST	1是，0否
+
+    @declared_attr
+    def __table_args__(cls):
+        return (UniqueConstraint("code", "date", name=f"UDX_CODE_DATE_{cls.__tablename__.upper()}"),)
+
+
+class BS_Daily(BS_Daily_Base, Base):
+    """
+    日线历史行情数据
+    """
+
+    __tablename__ = "odl_bs_daily"
+
+
+# ------后复权------------
+class BS_Daily_hfq(BS_Daily_Base, Base):
+    """
+    后复权-日线历史行情数据
+    """
+
+    __tablename__ = "odl_bs_daily_hfq"

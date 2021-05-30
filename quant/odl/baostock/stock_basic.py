@@ -42,7 +42,7 @@ def get_stock_basic():
     result["ts_code"] = [convert_to_tscode(x) for x in result.code]
 
     # 输出结果集
-    result.to_sql("odl_bs_stock_basic", engine, if_exists="append", index=False)
+    result.to_sql(BS_Stock_Basic.__tablename__, engine, if_exists="append", index=False)
 
     # 登出系统
     bs.logout()
