@@ -2,10 +2,10 @@
 """A股K线数据"""
 import concurrent.futures
 import datetime
-import time
 
 import pandas as pd
-from quant.odl.models import BS_Daily, BS_Daily_hfq, BS_Stock_Basic
+from quant.odl.baostock.util import crawl_query_history_k_data_plus
+from quant.odl.models import BS_Daily, BS_Daily_hfq, BS_Stock_Basic, BS_Trade_Dates, BS_Weekly_hfq
 from quant.util import logger
 from quant.util.database import engine
 from sqlalchemy import func, select
@@ -38,18 +38,30 @@ def __get_fields(frequency="d") -> str:
     return frequency_fields[frequency]
 
 
-def __get_params():
+def __get_params(frequency="d", adjustflag="3"):
     """
     获取参数：code，起止时间
     """
+
     s1 = select(BS_Stock_Basic.code, BS_Stock_Basic.ipoDate)
+    if adjustflag == "1":  # 后复权
+        s1 = s1.where(BS_Stock_Basic.type == "1")  # 只有股票有复权数据，指数没有
     df1 = pd.read_sql(s1, engine)
 
-    s2 = select(BS_Daily.code, func.max(BS_Daily.date).label("mx_date")).group_by(BS_Daily.code)
+    table_model = BS_Daily
+    if frequency == "d" and adjustflag == "1":
+        table_model = BS_Daily_hfq
+    elif frequency == "w" and adjustflag == "1":
+        table_model = BS_Weekly_hfq
+
+    s2 = select(table_model.code, func.max(table_model.date).label("mx_date")).group_by(table_model.code)
     df2 = pd.read_sql(s2, engine)
 
     df3 = df1.merge(df2, "left", on="code")
-    df3["end_date"] = datetime.datetime.now().date()
+
+    # 获取最新交易日期
+    t = BS_Trade_Dates.get_lastest_trade_date()
+    df3["end_date"] = t if t is not None else datetime.datetime.now().date()
 
     condition1 = df3["mx_date"].isnull()
     df3.loc[condition1, "start_date"] = df3.loc[condition1, "ipoDate"]
@@ -68,16 +80,16 @@ def __get_params():
     return result
 
 
-def get_history_k_data():
+def get_history_k_data(frequency="d", adjustflag="3"):
     """
     获取历史A股K线数据
     """
 
     # 获取指定日期的指数、股票数据
     data_df = pd.DataFrame()
-    params = __get_params()
-    fields = __get_fields('d')
-
+    params = __get_params(frequency, adjustflag)
+    fields = __get_fields(frequency)
+    load_to_DB = _load_to_DB[frequency]
     bs.login()
     codes_num = len(params)
     with tqdm(total=codes_num) as pbar:
@@ -86,35 +98,22 @@ def get_history_k_data():
                 start_date = datetime.datetime.strftime(task["start_date"], "%Y-%m-%d")
                 end_date = datetime.datetime.strftime(task["end_date"], "%Y-%m-%d")
 
-                max_try = 8  # 失败重连的最大次数
-                for i in range(max_try):
-                    k_rs = bs.query_history_k_data_plus(
-                        task["code"],
-                        fields,
-                        start_date=start_date,
-                        end_date=end_date
-                    )
-                    if k_rs.error_code == "0":
-                        data_df = data_df.append(k_rs.get_data())
-                        if len(data_df) > 6000:
-                            tmp = data_df
-                            executor.submit(load_to_DB, tmp)
-                            data_df = pd.DataFrame()
-                        break
-                    elif i < (max_try - 1):
-                        time.sleep(2)
-                        continue
-                    else:
-                        _logger.error("获取历史A股K线数据失败/query_history_k_data_plus respond error_code:" + k_rs.error_code)
-                        _logger.error("获取历史A股K线数据失败/query_history_k_data_plus respond  error_msg:" + k_rs.error_msg)
+                k_rs_data = crawl_query_history_k_data_plus(
+                    task["code"], fields, start_date, end_date, adjustflag=adjustflag
+                )
+                data_df = data_df.append(k_rs_data)
+                if len(data_df) > 6000:
+                    tmp = data_df
+                    executor.submit(load_to_DB, tmp, frequency, adjustflag)
+                    data_df = pd.DataFrame()
 
                 pbar.update(1)
-        load_to_DB(data_df)
+        load_to_DB(data_df, frequency, adjustflag)
 
     bs.logout()
 
 
-def load_to_DB(data_df: pd.DataFrame):
+def _load_daily_to_DB(data_df: pd.DataFrame, frequency, adjustflag):
     if data_df.empty:
         return
 
@@ -138,7 +137,44 @@ def load_to_DB(data_df: pd.DataFrame):
         data_df["pbMRQ"] = pd.to_numeric(data_df["pbMRQ"], errors="coerce")
         data_df["isST"] = pd.to_numeric(data_df["isST"], errors="coerce").astype(bool)
 
-        data_df.to_sql(BS_Daily.__tablename__, engine, if_exists="append", index=False)
+        if frequency == "d" and adjustflag == "3":
+            data_df.to_sql(BS_Daily.__tablename__, engine, if_exists="append", index=False)
+        elif frequency == "d" and adjustflag == "1":
+            data_df.to_sql(BS_Daily_hfq.__tablename__, engine, if_exists="append", index=False)
+
     except Exception as e:  # traceback.format_exc(1)
         codes = data_df["code"].unique()
         _logger.error("K线数据保存出错/出错代码：{}；异常信息：{}".format(codes.tolist(), repr(e)))
+
+
+def _load_weekly_to_DB(data_df: pd.DataFrame, frequency, adjustflag):
+    """
+    加载周线数据(后复权)到数据库
+    """
+
+    if data_df.empty:
+        return
+
+    try:
+
+        data_df["date"] = pd.to_datetime(data_df["date"])
+        # data_df['code'] =
+        data_df["open"] = pd.to_numeric(data_df["open"], errors="coerce")
+        data_df["high"] = pd.to_numeric(data_df["high"], errors="coerce")
+        data_df["low"] = pd.to_numeric(data_df["low"], errors="coerce")
+        data_df["close"] = pd.to_numeric(data_df["close"], errors="coerce")
+        data_df["volume"] = pd.to_numeric(data_df["volume"], errors="coerce")
+        data_df["amount"] = pd.to_numeric(data_df["amount"], errors="coerce")
+        # data_df['adjustflag'] =
+        data_df["turn"] = pd.to_numeric(data_df["turn"], errors="coerce")
+        data_df["pctChg"] = pd.to_numeric(data_df["pctChg"], errors="coerce")
+
+        if frequency == "w" and adjustflag == "1":
+            data_df.to_sql(BS_Weekly_hfq.__tablename__, engine, if_exists="append", index=False)
+
+    except Exception as e:  # traceback.format_exc(1)
+        codes = data_df["code"].unique()
+        _logger.error("周线后复权数据保存出错/出错代码：{}；异常信息：{}".format(codes.tolist(), repr(e)))
+
+
+_load_to_DB = {"d": _load_daily_to_DB, "w": _load_weekly_to_DB}

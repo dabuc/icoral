@@ -69,6 +69,8 @@ def get_data_part(x: datetime, p):
         return x.month
     elif p == "W":
         return x.strftime("%W")
+    elif p == "WD":
+        return x.weekday()
     elif p == "Q":
         if x.month <= 3:
             return 1

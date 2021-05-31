@@ -51,6 +51,7 @@ def get_trade_dates():
     result["year"] = result["calendar_date"].apply(get_data_part, p="Y")
     result["month"] = result["calendar_date"].apply(get_data_part, p="M")
     result["week"] = result["calendar_date"].apply(get_data_part, p="W")
+    result["weekday"] = result["calendar_date"].apply(get_data_part, p="WD")
     result["quarter"] = result["calendar_date"].apply(get_data_part, p="Q")
     pd.DatetimeIndex
     result["is_trading_day"] = [None if x == "" else bool(get_int_from_str(x)) for x in result["is_trading_day"]]

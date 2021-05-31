@@ -14,10 +14,11 @@ from sqlalchemy import (
     DateTime,
     JSON,
     Text,
+    func,
 )
 
 from quant.util.database import Base
-from datetime import datetime
+from datetime import date, datetime
 from quant.util.database import session_scope
 from quant.util import logger
 from quant.util.helper import is_dev_env
@@ -60,8 +61,19 @@ class BS_Trade_Dates(Base):
     year = Column("year", Integer, nullable=False)  # 年
     month = Column("month", Integer, nullable=False)  # 月
     week = Column("week", String(2), nullable=False)  # 周
+    weekday = Column("weekday", Integer, nullable=False)  # 星期几
     quarter = Column("quarter", Integer, nullable=False)  # 季度
     is_trading_day = Column("is_trading_day", Boolean)  # 是否交易日(0:非交易日;1:交易日)
+
+    @staticmethod
+    def get_lastest_trade_date():
+        """
+        获取最新交易日期
+        """
+        with session_scope() as sm:
+            query = sm.query(func.max(BS_Trade_Dates.calendar_date)).filter(BS_Trade_Dates.is_trading_day == True)
+            t = query.scalar()
+            return t
 
 
 class BS_Stock_Basic(Base):
@@ -405,3 +417,34 @@ class BS_Daily_hfq(BS_Daily_Base, Base):
     """
 
     __tablename__ = "odl_bs_daily_hfq"
+
+
+class BS_Weekly_Base:
+    """
+    周线历史行情数据
+    """
+
+    id = Column("id", Integer, primary_key=True)
+    date = Column("date", Date, nullable=False)  # 交易所行情日期
+    code = Column("code", String(10), nullable=False)  # BS证券代码 格式：sh.600000。sh：上海，sz：深圳
+    open = Column("open", Numeric(18, 4), nullable=False)  # 今开盘价格 精度：小数点后4位；单位：人民币元
+    high = Column("high", Numeric(18, 4), nullable=False)  # 最高价 精度：小数点后4位；单位：人民币元
+    low = Column("low", Numeric(18, 4), nullable=False)  # 最低价 精度：小数点后4位；单位：人民币元
+    close = Column("close", Numeric(18, 4), nullable=False)  # 今收盘价 精度：小数点后4位；单位：人民币元
+    volume = Column("volume", BigInteger)  # 成交数量 单位：股
+    amount = Column("amount", Numeric(23, 4))  # 成交金额	精度：小数点后4位；单位：人民币元
+    adjustflag = Column("adjustflag", Enum("1", "2", "3"))  # 复权状态(1：后复权， 2：前复权，3：不复权）
+    turn = Column("turn", Numeric(18, 6))  # 换手率 精度：小数点后6位；单位：%
+    pctChg = Column("pctChg", Numeric(18, 6))  # 涨跌幅（百分比）	精度：小数点后6位
+
+    @declared_attr
+    def __table_args__(cls):
+        return (UniqueConstraint("code", "date", name=f"UDX_CODE_DATE_{cls.__tablename__.upper()}"),)
+
+
+class BS_Weekly_hfq(BS_Weekly_Base, Base):
+    """
+    后复权-周线历史行情数据
+    """
+
+    __tablename__ = "odl_bs_weekly_hfq"

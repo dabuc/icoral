@@ -21,15 +21,19 @@ def create_dw():
 
 
 @cli.command()
-def query_stock_basic():
-    """更新证券基本资料"""
-    click.confirm("正在更新证券基本资料，是否继续？", abort=True)
+def query_basic_info():
+    """更新BS基本资料:证券代码，交易日期"""
+    click.confirm("正在更新基本资料，是否继续？", abort=True)
     from quant.odl import models
+    from quant.odl.baostock.trade_dates import get_trade_dates
 
     models.BS_Stock_Basic.clear_table()
     click.echo("BS_Stock_Basic已经清空")
     stock_basic.get_stock_basic()
-    click.echo("更新证券基本资料完成")
+    click.echo("证券基本资料完成")
+
+    get_trade_dates()
+    click.echo("交易日期更新完成")
 
 
 @cli.command()
@@ -113,25 +117,17 @@ def query_forecast_report():
 
 
 @cli.command()
-def query_trade_dates():
-    """交易日查询"""
-    click.confirm("正在更新交易日期，是否继续？", abort=True)
-    from quant.odl.baostock.trade_dates import get_trade_dates
-
-    get_trade_dates()
-    click.echo("交易日期更新完成")
-
-
-@cli.command()
-def query_history_k_data():
+@click.option("--f", type=click.Choice(["d", "w"]), default="d", help="默认为d，日k线；d=日k线、w=周、m=月")
+@click.option("--a", type=click.Choice(["1", "2", "3"]), default="3", help="复权类型，默认不复权：3；1：后复权；2：前复权")
+def query_history_k_data(f, a):
     """获取历史A股K线数据"""
-    click.confirm("正在更新历史A股K线数据，是否继续？", abort=True)
+    click.confirm("正在更新历史A股K线数据({}-{})，是否继续？".format(f, a), abort=True)
     from quant.odl.baostock.history_k_data import get_history_k_data
 
-    get_history_k_data()
+    get_history_k_data(f, a)
     click.echo("更新历史A股K线数据")
 
 
 if __name__ == "__main__":
-    # cli()
-    query_history_k_data()
+    cli()
+    # query_history_k_data(['--f','d','--a','1'])
