@@ -12,7 +12,7 @@ from quant.util import logger
 _logger = logger.Logger(__name__).get_log()
 
 
-def load_to_DB(data_df, param, pbar):
+def load_to_DB(data_df, param):
     """
     加载数据到数据库
     """
@@ -35,19 +35,13 @@ def load_to_DB(data_df, param, pbar):
             index=False,
         )
     except Exception as e:  # traceback.format_exc(1)
-        _logger.error(
-            "{}:{}-{}保存出错/{}".format(
-                param["code"], param["year"], param["quarter"], repr(e)
-            )
-        )
-    finally:
-        pbar.update(1)
+        _logger.error("{}:{}-{}保存出错/{}".format(param["code"], param["year"], param["quarter"], repr(e)))
 
 
 def get_profit_data():
     #### 登陆系统 ####
     bs.login()  # noqa
 
-    crawl_finance_data(bs.query_profit_data, load_to_DB)
+    crawl_finance_data(bs.query_profit_data, load_to_DB, BS_Profit_Data)
     #### 登出系统 ####
     bs.logout()

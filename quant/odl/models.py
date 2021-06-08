@@ -116,6 +116,16 @@ class BS_Stock_Basic(Base):
 
             return result
 
+    @staticmethod
+    def get_ipo_date(code: str):
+        """
+        获取股票的上市日期
+        """
+        with session_scope() as sm:
+            query = sm.query(BS_Stock_Basic.ipoDate).filter(BS_Stock_Basic.code == code)
+            r = query.scalar()
+            return r
+
 
 class BS_Profit_Data(Base):
     """
