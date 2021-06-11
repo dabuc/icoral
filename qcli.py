@@ -117,7 +117,12 @@ def query_forecast_report():
 
 
 @cli.command()
-@click.option("--f", type=click.Choice(["d", "w"]), default="d", help="默认为d，日k线；d=日k线、w=周、m=月")
+@click.option(
+    "--f",
+    type=click.Choice(["d", "w", "60", "30"]),
+    default="d",
+    help="默认为d，日k线；d=日k线、w=周、m=月、5=5分钟、15=15分钟、30=30分钟、60=60分钟",
+)
 @click.option("--a", type=click.Choice(["1", "2", "3"]), default="3", help="复权类型，默认不复权：3；1：后复权；2：前复权")
 def query_history_k_data(f, a):
     """获取历史A股K线数据"""
@@ -130,4 +135,4 @@ def query_history_k_data(f, a):
 
 if __name__ == "__main__":
     cli()
-    # query_history_k_data(['--f','d','--a','1'])
+    # query_history_k_data(['--f','60','--a','1'])

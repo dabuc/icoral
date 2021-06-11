@@ -5,7 +5,15 @@ import datetime
 
 import pandas as pd
 from quant.odl.baostock.util import crawl_query_history_k_data_plus
-from quant.odl.models import BS_Daily, BS_Daily_hfq, BS_Stock_Basic, BS_Trade_Dates, BS_Weekly_hfq
+from quant.odl.models import (
+    BS_Daily,
+    BS_Daily_hfq,
+    BS_m30_hfq,
+    BS_m60_hfq,
+    BS_Stock_Basic,
+    BS_Trade_Dates,
+    BS_Weekly_hfq,
+)
 from quant.util import logger
 from quant.util.database import engine
 from sqlalchemy import func, select
@@ -44,7 +52,7 @@ def __get_params(frequency="d", adjustflag="3"):
     """
 
     s1 = select(BS_Stock_Basic.code, BS_Stock_Basic.ipoDate)
-    if adjustflag == "1":  # 后复权
+    if adjustflag == "1" or frequency == "60" or frequency == "30":  # 后复权
         s1 = s1.where(BS_Stock_Basic.type == "1")  # 只有股票有复权数据，指数没有
     df1 = pd.read_sql(s1, engine)
 
@@ -53,6 +61,10 @@ def __get_params(frequency="d", adjustflag="3"):
         table_model = BS_Daily_hfq
     elif frequency == "w" and adjustflag == "1":
         table_model = BS_Weekly_hfq
+    elif frequency == "60" and adjustflag == "1":
+        table_model = BS_m60_hfq
+    elif frequency == "30" and adjustflag == "1":
+        table_model = BS_m30_hfq
 
     s2 = select(table_model.code, func.max(table_model.date).label("mx_date")).group_by(table_model.code)
     df2 = pd.read_sql(s2, engine)
@@ -99,7 +111,12 @@ def get_history_k_data(frequency="d", adjustflag="3"):
                 end_date = datetime.datetime.strftime(task["end_date"], "%Y-%m-%d")
 
                 k_rs_data = crawl_query_history_k_data_plus(
-                    task["code"], fields, start_date, end_date, adjustflag=adjustflag
+                    task["code"],
+                    fields,
+                    start_date=start_date,
+                    end_date=end_date,
+                    frequency=frequency,
+                    adjustflag=adjustflag,
                 )
                 data_df = data_df.append(k_rs_data)
                 if len(data_df) > 6000:
@@ -177,4 +194,34 @@ def _load_weekly_to_DB(data_df: pd.DataFrame, frequency, adjustflag):
         _logger.error("周线后复权数据保存出错/出错代码：{}；异常信息：{}".format(codes.tolist(), repr(e)))
 
 
-_load_to_DB = {"d": _load_daily_to_DB, "w": _load_weekly_to_DB}
+def _load_min_to_DB(data_df: pd.DataFrame, frequency, adjustflag):
+    """
+    docstring
+    """
+
+    if data_df.empty:
+        return
+
+    try:
+        data_df["date"] = pd.to_datetime(data_df["date"], format="%Y-%m-%d")
+        data_df["time"] = pd.to_datetime(data_df["time"], format="%Y%m%d%H%M%S%f")
+        # data_df['code'] =
+        data_df["open"] = pd.to_numeric(data_df["open"], errors="coerce")
+        data_df["high"] = pd.to_numeric(data_df["high"], errors="coerce")
+        data_df["low"] = pd.to_numeric(data_df["low"], errors="coerce")
+        data_df["close"] = pd.to_numeric(data_df["close"], errors="coerce")
+        data_df["volume"] = pd.to_numeric(data_df["volume"], errors="coerce")
+        data_df["amount"] = pd.to_numeric(data_df["amount"], errors="coerce")
+        # content['adjustflag'] =
+
+        if frequency == "60" and adjustflag == "1":
+            data_df.to_sql(BS_m60_hfq.__tablename__, engine, if_exists="append", index=False)
+        elif frequency == "30" and adjustflag == "1":
+            data_df.to_sql(BS_m30_hfq.__tablename__, engine, if_exists="append", index=False)
+
+    except Exception as e:  # traceback.format_exc(1)
+        codes = data_df["code"].unique()
+        _logger.error("{}-{}分钟数据保存出错/出错代码：{}；异常信息：{}".format(frequency, adjustflag, codes.tolist(), repr(e)))
+
+
+_load_to_DB = {"d": _load_daily_to_DB, "w": _load_weekly_to_DB, "60": _load_min_to_DB, "30": _load_min_to_DB}
