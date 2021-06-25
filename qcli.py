@@ -199,6 +199,6 @@ def daily_updating():
 
 
 if __name__ == "__main__":
-    #cli()
+    cli()
     #query_history_k_data(['--f','60','--a','1'])
-    daily_updating()
+    #daily_updating()
