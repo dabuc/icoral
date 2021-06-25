@@ -130,7 +130,70 @@ def query_history_k_data(f, a):
     from quant.odl.baostock.history_k_data import get_history_k_data
 
     get_history_k_data(f, a)
-    click.echo("更新历史A股K线数据")
+    click.echo("历史A股K线数据更新完成")
+
+
+@cli.command()
+def ft_get_plate_list():
+    """
+    获取板块列表
+    """
+    click.confirm("正在更新（富途）板块列表，是否继续？", abort=True)
+    from quant.odl.futu.plate_list import query_plate_list
+    query_plate_list()
+    click.echo("（富途）板块列表更新完成")
+
+@cli.command()
+def ft_get_plate_stock():
+    """
+    获取板块内股票列表
+    """
+    click.confirm("正在获取（富途）板块内股票列表，是否继续？", abort=True)
+    from quant.odl.futu.plate_stock import query_plate_stock
+    query_plate_stock()
+    click.echo("获取（富途）板块内股票列表信息更新完成")
+
+@cli.command()
+def ft_get_stock_basicinfo():
+    """
+    获取静态数据
+    """
+    click.confirm("正在获取（富途）静态数据，是否继续？", abort=True)
+    from quant.odl.futu.stock_basicinfo import query_stock_basicinfo
+    query_stock_basicinfo()
+    click.echo("（富途）静态数据更新完成")
+
+
+@cli.command()
+def daily_updating():
+    """
+    每日任务更新
+    """
+    click.confirm("批量更新，是否继续？", abort=True)
+    from quant.odl import models
+    from quant.odl.baostock.trade_dates import get_trade_dates
+
+    models.BS_Stock_Basic.clear_table()
+    stock_basic.get_stock_basic()
+    click.echo("证券基本资料更新完成")
+    get_trade_dates()
+    click.echo("交易日期更新完成")
+
+    from quant.odl.baostock.history_k_data import get_history_k_data
+
+    get_history_k_data('d', '1')
+    click.echo("后复权-日K线数据更新完成")
+    get_history_k_data('d', '3')
+    click.echo("不复权-日K线数据更新完成")
+    get_history_k_data('w', '1')
+    click.echo("后复权-周K线数据更新完成")
+    get_history_k_data('30', '1')
+    click.echo("后复权-30m-K线数据更新完成")
+    get_history_k_data('60', '1')
+    click.echo("后复权-60m-K线数据更新完成")
+
+    click.echo("全部更新完成")
+
 
 
 if __name__ == "__main__":

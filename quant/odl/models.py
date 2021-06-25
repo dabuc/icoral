@@ -520,28 +520,28 @@ class Ft_stock_basicinfo(Base):
     code = Column("code", String(20), primary_key=True)  # str	股票代码
     name = Column("name", String(200))  # str	股票名称
     lot_size = Column("lot_size", Integer)  # int	每手股数，期权表示每份合约股数（指数期权无该字段），期货表示合约乘数
-    market = Column(Enum("1", "2", "3"))
+    market = Column(Enum("NONE", "HK", "US", "SH", "SZ", "SG", "JP"))
     stock_type = Column("stock_type", String(10))  # SecurityType	股票类型
     stock_child_type = Column("stock_child_type", String(10))  # WrtType	窝轮子类型
     stock_owner = Column("stock_owner", String(10))  # str	窝轮所属正股的代码，或期权标的股的代码
     option_type = Column("option_type", String(10))  # OptionType	期权类型
-    strike_time = Column("strike_time", String(10))  # str	期权行权日（港股和 A 股市场默认是北京时间，美股市场默认是美东时间）
+    strike_time = Column("strike_time", DateTime)  # str	期权行权日（港股和 A 股市场默认是北京时间，美股市场默认是美东时间）
     strike_price = Column("strike_price", Numeric(23, 6))  # float	期权行权价
     suspension = Column("suspension", Boolean)  # bool	期权是否停牌（True：停牌，False：未停牌）
-    listing_date = Column("listing_date", String(10))  # str	上市时间
+    listing_date = Column("listing_date", Date)  # str	上市时间
     stock_id = Column("stock_id", BigInteger)  # int	股票 ID
     delisting = Column("delisting", Boolean)  # bool	是否退市
     index_option_type = Column("index_option_type", String(10))  # str	指数期权类型
     main_contract = Column("main_contract", Boolean)  # bool	是否主连合约
-    last_trade_time = Column("last_trade_time", String(10))  # str	最后交易时间，主连，当月，下月等期货没有该字段
+    last_trade_time = Column("last_trade_time", DateTime)  # str	最后交易时间，主连，当月，下月等期货没有该字段
 
 
-class Ft_Stock_Basic(Base):
+class Ft_plate_stock(Base):
     """
     富途板块内股票列表
     """
 
-    __tablename__ = "odl_ft_stock_basic"
+    __tablename__ = "odl_ft_plate_stock"
     plate_code = Column("plate_code", String(10), primary_key=True)
     code = Column("code", String(15), primary_key=True)  # 股票代码
     lot_size = Column("lot_size", Integer)  # 每手股数，期货表示合约乘数
@@ -572,7 +572,7 @@ class Ft_History_Kline_Base:
     turnover = Column("turnover", Numeric(23, 4))  # float	成交额
     change_rate = Column("change_rate", Numeric(18, 6))  # float	涨跌幅
     last_close = Column("last_close", Numeric(18, 4))  # float	昨收价
-    autype = Column("autype", Enum("NONE", "QFQ", "HFQ"), nullable=False)#K 线复权类型
+    autype = Column("autype", Enum("NONE", "QFQ", "HFQ"), nullable=False)  # K 线复权类型
 
 
 class Ft_history_kline(Ft_History_Kline_Base, Base):

@@ -19,7 +19,14 @@ def query_stock_basicinfo():
             if ret == RET_OK:
 
                 data["market"] = market
-                #data["stock_type"] = SecurityType.PLATE
+                data["strike_price"] = pd.to_numeric(data["strike_price"], errors="coerce")
+                data["suspension"] = pd.to_numeric(data["suspension"], errors="coerce").astype(bool)
+                data["delisting"] = pd.to_numeric(data["delisting"], errors="coerce").astype(bool)
+                data["main_contract"] = pd.to_numeric(data["main_contract"], errors="coerce").astype(bool)
+
+                data["strike_time"] = pd.to_datetime(data["strike_time"])
+                data["listing_date"] = pd.to_datetime(data["listing_date"], format="%Y-%m-%d")  
+                data["last_trade_time"] = pd.to_datetime(data["last_trade_time"])
 
                 data.to_sql(
                     Ft_stock_basicinfo.__tablename__,
