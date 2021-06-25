@@ -13,6 +13,7 @@ class BaseConfig:
     """
 
     IDB_DEBUG = "0"
+    IS_TC_ENV = os.getenv("IS_TC_ENV", "0")
     TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN", "")
     LOG_PATH = os.getenv("LOG_PATH", base_dir + "/logs/quant.log")
     LOG_ERR_PATH= os.getenv("LOG_ERR_PATH", base_dir + "/logs/quant_err.log")
@@ -34,7 +35,7 @@ class ProductionConfig(BaseConfig):
     """
     生成环境正式配置类
     """
-
+    
     DB_QUANT = os.getenv("DB_SCHEMA", "")
     DATABASE_URL = os.getenv("DATABASE_URL").format(DB_QUANT)
 

@@ -180,6 +180,7 @@ def daily_updating():
     click.echo("交易日期更新完成")
 
     from quant.odl.baostock.history_k_data import get_history_k_data
+    from quant.util.helper import is_tc_env
 
     get_history_k_data('d', '1')
     click.echo("后复权-日K线数据更新完成")
@@ -187,15 +188,17 @@ def daily_updating():
     click.echo("不复权-日K线数据更新完成")
     get_history_k_data('w', '1')
     click.echo("后复权-周K线数据更新完成")
-    get_history_k_data('30', '1')
-    click.echo("后复权-30m-K线数据更新完成")
-    get_history_k_data('60', '1')
-    click.echo("后复权-60m-K线数据更新完成")
+    if not is_tc_env():
+        get_history_k_data('30', '1')
+        click.echo("后复权-30m-K线数据更新完成")
+        get_history_k_data('60', '1')
+        click.echo("后复权-60m-K线数据更新完成")
 
     click.echo("全部更新完成")
 
 
 
 if __name__ == "__main__":
-    cli()
-    # query_history_k_data(['--f','60','--a','1'])
+    #cli()
+    #query_history_k_data(['--f','60','--a','1'])
+    daily_updating()

@@ -9,3 +9,10 @@ def is_dev_env():
         return True
     else:
         return False
+
+
+def is_tc_env():
+    if QtConfig.IS_TC_ENV == "0":
+        return False
+    else:
+        return True
