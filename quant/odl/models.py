@@ -88,6 +88,7 @@ class BS_Stock_Basic(Base):
     type = Column(Enum("1", "2", "3"))  # 证券类型，其中1：股票，2：指数,3：其它
     status = Column(Boolean)  # 上市状态，其中1：上市，0：退市
     ts_code = Column(String(10))  # ts_证券代码
+    ft_code = Column(String(10))  # ft_证券代码
     updated_on = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     @staticmethod
@@ -508,6 +509,19 @@ class Ft_plate_list(Base):
     plate_name = Column("plate_name", String(25), nullable=False)  # 	板块名字
     plate_id = Column("plate_id", String(10), nullable=False)  # 	板块 ID
     market = Column("market", String(4), nullable=False)  # 市场标识。注意：这里不区分沪和深
+    updated_on = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    @staticmethod
+    def get_hs_plate_list():
+        """
+        获取沪深板块列表
+        """
+        with session_scope() as sm:
+            query = sm.query(Ft_plate_list.code).filter(Ft_plate_list.market == 'SH')
+            r = [x['code'] for x in query]
+            return r
+
+    
 
 
 class Ft_stock_basicinfo(Base):

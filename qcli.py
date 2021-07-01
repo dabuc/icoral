@@ -140,18 +140,10 @@ def ft_get_plate_list():
     """
     click.confirm("正在更新（富途）板块列表，是否继续？", abort=True)
     from quant.odl.futu.plate_list import query_plate_list
+
     query_plate_list()
     click.echo("（富途）板块列表更新完成")
 
-@cli.command()
-def ft_get_plate_stock():
-    """
-    获取板块内股票列表
-    """
-    click.confirm("正在获取（富途）板块内股票列表，是否继续？", abort=True)
-    from quant.odl.futu.plate_stock import query_plate_stock
-    query_plate_stock()
-    click.echo("获取（富途）板块内股票列表信息更新完成")
 
 @cli.command()
 def ft_get_stock_basicinfo():
@@ -160,8 +152,21 @@ def ft_get_stock_basicinfo():
     """
     click.confirm("正在获取（富途）静态数据，是否继续？", abort=True)
     from quant.odl.futu.stock_basicinfo import query_stock_basicinfo
+
     query_stock_basicinfo()
     click.echo("（富途）静态数据更新完成")
+
+
+@cli.command()
+def ft_get_plate_stock_A():
+    """
+    查询A股各个板块的成分股
+    """
+    click.confirm("正在更新A股各个板块的成分股，是否继续？", abort=True)
+    from quant.odl.futu.plate_stock import query_plate_stock_A
+
+    query_plate_stock_A()
+    click.echo("A股各个板块的成分股数据更新完成")
 
 
 @cli.command()
@@ -182,23 +187,22 @@ def daily_updating():
     from quant.odl.baostock.history_k_data import get_history_k_data
     from quant.util.helper import is_tc_env
 
-    get_history_k_data('d', '1')
+    get_history_k_data("d", "1")
     click.echo("后复权-日K线数据更新完成")
-    get_history_k_data('d', '3')
+    get_history_k_data("d", "3")
     click.echo("不复权-日K线数据更新完成")
-    get_history_k_data('w', '1')
+    get_history_k_data("w", "1")
     click.echo("后复权-周K线数据更新完成")
     if not is_tc_env():
-        get_history_k_data('30', '1')
+        get_history_k_data("30", "1")
         click.echo("后复权-30m-K线数据更新完成")
-        get_history_k_data('60', '1')
+        get_history_k_data("60", "1")
         click.echo("后复权-60m-K线数据更新完成")
 
     click.echo("全部更新完成")
 
 
-
 if __name__ == "__main__":
     cli()
-    #query_history_k_data(['--f','60','--a','1'])
-    #daily_updating()
+    # query_history_k_data(['--f','60','--a','1'])
+    # daily_updating()

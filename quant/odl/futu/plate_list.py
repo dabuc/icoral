@@ -27,6 +27,7 @@ def query_plate_list():
                 # print(data)
 
                 data["market"] = m
+                data["updated_on"] = datetime.now()
 
                 data.to_sql(
                     Ft_plate_list.__tablename__,

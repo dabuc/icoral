@@ -40,6 +40,9 @@ def get_stock_basic():
     result["ipoDate"] = pd.to_datetime(result.ipoDate, format="%Y-%m-%d")
     result["outDate"] = pd.to_datetime(result.outDate, format="%Y-%m-%d")
     result["ts_code"] = [convert_to_tscode(x) for x in result.code]
+    result["ft_code"] = [x.upper() for x in result.code]
+
+
 
     # 输出结果集
     result.to_sql(BS_Stock_Basic.__tablename__, engine, if_exists="append", index=False)
