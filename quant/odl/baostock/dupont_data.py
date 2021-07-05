@@ -21,8 +21,8 @@ def load_to_DB(data_df, param):
     加载数据到数据库
     """
 
-    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"], format="%Y-%m-%d")
-    data_df["statDate"] = pd.to_datetime(data_df["statDate"], format="%Y-%m-%d")
+    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"])
+    data_df["statDate"] = pd.to_datetime(data_df["statDate"])
 
     data_df["dupontROE"] = pd.to_numeric(data_df["dupontROE"], errors="coerce")
     data_df["dupontAssetStoEquity"] = pd.to_numeric(

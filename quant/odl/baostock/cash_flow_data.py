@@ -17,8 +17,8 @@ def load_to_DB(data_df, param):
     加载数据到数据库
     """
 
-    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"], format="%Y-%m-%d")
-    data_df["statDate"] = pd.to_datetime(data_df["statDate"], format="%Y-%m-%d")
+    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"])
+    data_df["statDate"] = pd.to_datetime(data_df["statDate"])
     data_df["CAToAsset"] = pd.to_numeric(data_df["CAToAsset"], errors="coerce")
     data_df["NCAToAsset"] = pd.to_numeric(data_df["NCAToAsset"], errors="coerce")
     data_df["tangibleAssetToAsset"] = pd.to_numeric(data_df["tangibleAssetToAsset"], errors="coerce")
