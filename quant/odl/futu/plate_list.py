@@ -18,25 +18,36 @@ def query_plate_list():
 
     quote_ctx = OpenQuoteContext(host="127.0.0.1", port=11111)
 
-    market_list = [Market.HK, Market.SH, Market.US]
+    market_list = [Market.HK, Market.SH]
+
+    plate_list = ["INDUSTRY", "REGION", "CONCEPT"]  # 行业板块,地域板块,概念板块
 
     try:
         for m in market_list:
-            ret, data = quote_ctx.get_plate_list(m, Plate.ALL)
-            if ret == RET_OK:
-                # print(data)
+            for plate in plate_list:
+                start = time.time()
+                ret, data = quote_ctx.get_plate_list(m, plate)
+                if ret == RET_OK:
+                    # print(data)
 
-                data["market"] = m
-                data["updated_on"] = datetime.now()
+                    data["market"] = m
+                    data["plate_class"] = plate
+                    data["updated_on"] = datetime.now()
 
-                data.to_sql(
-                    Ft_plate_list.__tablename__,
-                    engine,
-                    if_exists="append",
-                    index=False,
-                )
-            else:
-                _logger.error("获取板块列表报错/error:{}".format(data))
-                # print("error:", data)
+                    data.to_sql(
+                        Ft_plate_list.__tablename__,
+                        engine,
+                        if_exists="append",
+                        index=False,
+                    )
+                else:
+                    _logger.error("获取板块列表报错/error:{}".format(data))
+                    # print("error:", data)
+
+                end = time.time()
+                jg = 3 - (end - start)
+                if jg > 0:
+                    time.sleep(jg)
+
     finally:
         quote_ctx.close()  # 结束后记得关闭当条连接，防止连接条数用尽

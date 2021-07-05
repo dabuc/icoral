@@ -505,6 +505,7 @@ class Ft_plate_list(Base):
     """板块列表"""
 
     __tablename__ = "odl_ft_plate_list"
+    plate_class = Column(Enum("ALL", "INDUSTRY", "REGION", "CONCEPT", "OTHER"))
     code = Column("code", String(10), primary_key=True)  # 板块代码
     plate_name = Column("plate_name", String(25), nullable=False)  # 	板块名字
     plate_id = Column("plate_id", String(10), nullable=False)  # 	板块 ID
@@ -517,11 +518,9 @@ class Ft_plate_list(Base):
         获取沪深板块列表
         """
         with session_scope() as sm:
-            query = sm.query(Ft_plate_list.code).filter(Ft_plate_list.market == 'SH')
-            r = [x['code'] for x in query]
+            query = sm.query(Ft_plate_list.code).filter(Ft_plate_list.market == "SH")
+            r = [x["code"] for x in query]
             return r
-
-    
 
 
 class Ft_stock_basicinfo(Base):

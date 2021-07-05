@@ -17,8 +17,8 @@ def load_to_DB(data_df, param):
     加载数据到数据库
     """
 
-    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"], format="%Y-%m-%d")
-    data_df["statDate"] = pd.to_datetime(data_df["statDate"], format="%Y-%m-%d")
+    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"])
+    data_df["statDate"] = pd.to_datetime(data_df["statDate"])
     data_df["currentRatio"] = pd.to_numeric(data_df["currentRatio"], errors="coerce")
     data_df["quickRatio"] = pd.to_numeric(data_df["quickRatio"], errors="coerce")
     data_df["cashRatio"] = pd.to_numeric(data_df["cashRatio"], errors="coerce")

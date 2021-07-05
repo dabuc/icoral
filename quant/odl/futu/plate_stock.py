@@ -41,7 +41,7 @@ def query_plate_stock(plate_code_list: list):
                                 "updated_on",
                             ]
                         ]
-                        df.to_csv("aa.csv")
+                        #df.to_csv("aa.csv")
                         df.to_sql(
                             Ft_plate_stock.__tablename__,
                             engine,

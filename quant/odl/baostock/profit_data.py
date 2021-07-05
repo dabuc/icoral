@@ -16,8 +16,8 @@ def load_to_DB(data_df, param):
     """
     加载数据到数据库
     """
-    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"], format="%Y-%m-%d")
-    data_df["statDate"] = pd.to_datetime(data_df["statDate"], format="%Y-%m-%d")
+    data_df["pubDate"] = pd.to_datetime(data_df["pubDate"])
+    data_df["statDate"] = pd.to_datetime(data_df["statDate"])
     data_df["roeAvg"] = pd.to_numeric(data_df["roeAvg"], errors="coerce")
     data_df["npMargin"] = pd.to_numeric(data_df["npMargin"], errors="coerce")
     data_df["gpMargin"] = pd.to_numeric(data_df["gpMargin"], errors="coerce")
